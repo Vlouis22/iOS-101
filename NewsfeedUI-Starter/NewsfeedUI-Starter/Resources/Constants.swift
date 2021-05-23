@@ -13,7 +13,7 @@ enum Constants {
     static let APIKey: String = ""
 
     /// Determines whether api responses should be mocked based on the presense of an api key.
-    static let mockResponses = APIKey.isEmpty
+    static let useMockResponses = APIKey.isEmpty
 
     enum Endpoint {
         static let general = endpoint(for: "general")
@@ -21,9 +21,12 @@ enum Constants {
         static let health = endpoint(for: "health")
         static let entertainment = endpoint(for: "entertainment")
         // TODO: Add more categories here
+        static let business = endpoint(for: "business")
+        static let science = endpoint(for: "science")
+        static let technology = endpoint(for: "technology")
 
         static func endpoint(for category: String) -> String {
-            return String(format: "https://newsapi.org/v2/top-headlines?country=us&category=%@&apiKey=%@", category, APIKey)
+            String(format: "https://newsapi.org/v2/top-headlines?country=us&category=%@&apiKey=%@", category, APIKey)
         }
     }
     

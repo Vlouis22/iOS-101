@@ -15,6 +15,7 @@ In this workshop we'll be building a basic news app that will display different 
 5. Once the project is open in Xcode, click on the top level folder (NewsfeedUI-Starter) in the project navigator, then click on "General" settings, and then look for the "Identity" settings section
 6. Inside Identity settings, modify the "Bundle Identifier" by adding your name to the end of it. For example, change it from `com.ses.NewsfeedUI-Starter.MyName` to `com.ses.NotesUI-Starter-SteveJobs`
    * **NOTE:** The goal is to have a unique bundle identifier. Your app won't compile if the bundle identifier is not unique.
+7. Build and run the project to make sure everything is working fine. Press the symbol near the top left corner of Xcode that looks like a Play ▶️ button or use the shortcut: `⌘ + R`
 
 <img src="./StepByStepResources/bundle_identifier.png" width="900" />
 
@@ -22,7 +23,7 @@ In this workshop we'll be building a basic news app that will display different 
 
 If you want this app to work with real API calls, make sure to get a [News API development key](https://newsapi.org/docs/get-started). This will allow the app to fetch real data. But if you don't have a key, don't worry - this workshop is also set up so that you can use mock data without an API key.
 
-If you do get a key, feel free to open up the `Constants.swift` file under the `Resources` group, and replace the `static let APIKey` empty string with your personal key. This will set the `mockResponses` variable to `true`, triggering networking code to hit live data. However, it might be best to do this after going through the workshop because some of the Xcode previews will either be missing or show placeholder values when using live data.
+If you do get a key, feel free to open up the `Constants.swift` file under the `Resources` group, and replace the `static let APIKey` empty string with your personal key. This will set the `useMockResponses` variable to `false`, triggering networking code to hit live data. However, it might be best to do this after going through the workshop because some of the Xcode previews will either be missing or show placeholder values when using live data.
 
 <img src="./StepByStepResources/api_key_location.png" width="600"/>
 
@@ -32,9 +33,9 @@ In this workshop, there are a few pre-made files that we'll be using to make thi
 
 The first file is `Constants.swift`. If you have a personal API key to use, you've probably already looked at this file. It's not very complicated, just a place to keep a few constants that are used throughout the rest of the workshop.
 
-Next is `APIResponse.swift`. In this file, you'll find the classes `NewsArticle` and `NewsApiResponse`. These are the data models for our app. `NewsArticle` represents a single article, and `NewsApiResponse` represents a response from the News API, which contains many different `NewsArticle`'s.
+Next is `APIResponse.swift`. In this file, you'll find the classes `NewsArticle` and `NewsApiResponse`. These are the data models for our app. `NewsArticle` represents a single article, and `NewsApiResponse` represents a response from the News API, which contains an array of `[NewsArticle]`'s.
 
-`Models.swift` contains a class called `NewsFeed`. This class will fetch and store all of the different news articles from the API. It has a property for each different category of news (`general`, `sports`, `health`, `entertainment`). These properties are arrays of `NewsArticle`'s corresponding to the different categories. As you can see, `NewsFeed` implements the `ObservableObject` protocol. An `ObservableObject` will publish announcements when it's values have changed so that SwiftUI can react to those changes and update the user interface. The properties in this class (`general`, `sports`, `health`, `entertainment`) are all marked as `@Published`, which tells SwiftUI that these properties should trigger change notifications. Later on in the workshop, you'll see how these properties are used to reactively display news articles. If you want to read more about this topic, [this is a good place to start](https://www.hackingwithswift.com/quick-start/swiftui/observable-objects-environment-objects-and-published). `NewsFeed` also contains a `static var sampleData`, which is just an array of sample news articles that we will use to test our app throughout the workshop.
+`Models.swift` contains a class called `NewsFeed`. This class will fetch and store all of the different news articles from the API. It has a property for each category of news (`general`, `sports`, `health`, `entertainment`). These properties are arrays of `NewsArticle`'s corresponding to the different categories. As you can see, `NewsFeed` implements the `ObservableObject` protocol. An `ObservableObject` will publish announcements when it's values have changed so that SwiftUI can react to those changes and update the user interface. The properties in this class (`general`, `sports`, `health`, `entertainment`) are all marked as `@Published`, which tells SwiftUI that these properties should trigger change notifications. Later on in the workshop, you'll see how these properties are used to reactively display news articles. If you want to read more about this topic, [this is a good place to start](https://www.hackingwithswift.com/quick-start/swiftui/observable-objects-environment-objects-and-published). `NewsFeed` also contains a `static var sampleData`, which is just an array of sample news articles that we will use to test our app throughout the workshop.
 
 Under the "Views" group, we have also have `RemoteImage.swift`. This class defines a `View` called `RemoteImage` that will download and display an image from any URL that you provide to it. The implementation details are a bit out of the scope of this tutorial, but we will at least see how to use this `View` later on in the workshop.
 
@@ -59,7 +60,7 @@ First, we'll build a `CarouselView`, which will display multiple pages of conten
 <img src="./StepByStepResources/file_type_screen.png" width="600"/>
 <img src="./StepByStepResources/name_file_screen.png" width="600"/>
 
-2. Insert a `var` at the top of the `CarouselView` `struct` called `articles` that is of type `[NewsArticle]`
+2. Insert a `var` at the top of the `CarouselView` struct called `articles` that is of type `[NewsArticle]`
 
 ```swift
 struct CarouselView: View {
@@ -142,7 +143,7 @@ struct FeatureView_Previews: PreviewProvider {
 }
 ```
 
-4. Replace the `Text` in the `body` with an image for the current `article`:
+4. Replace the `Text` View in the `body` with a `RemoteImage` View for the current `article`:
 
 ```swift
 var body: some View {
@@ -287,7 +288,7 @@ struct CarouselView_Previews: PreviewProvider {
 
 ## 3. Displaying Categories of Articles
 
-In this section we'll create the view that display categories of articles. This new view will display multiple article "cards" in a horizontal scroll view. One of these horizontal scroll views will contain all articles from a given category (technology, business, sports, music, etc.).
+In this section we'll create the view that displays categories of articles. This new view will display multiple article "cards" in a horizontal scroll view. Each of these horizontal scroll views will contain all articles from a given category (e.g. technology, business, sports, music, etc).
 
 <img src="./StepByStepResources/category_row.png" width="300"/>
 
@@ -297,7 +298,7 @@ First, we will build a horizontal scroll view to contain all of the articles in 
 
 1. Create a new SwiftUI file in the `Views` folder called `CategoryRow.swift`
 
-2. Insert two `var`s at the top of the `CategoryRow` `struct` called `categoryName` and `articles`:
+2. Insert two `var`s at the top of the `CategoryRow` struct called `categoryName` and `articles`:
 
 ```swift
 struct CategoryRow: View {
@@ -305,8 +306,8 @@ struct CategoryRow: View {
     var articles: [NewsArticle]
 ```
 
-* `categoryName` is the name of this category ("Technology", "Business", "Sports", "Music", etc.).
-* `articles` is an `Array` of `NewsArticle`s that belong to this category.
+* `categoryName` is the name of this category ("Technology", "Business", "Sports", "Music", etc.)
+* `articles` is an `Array` of `NewsArticle`s that belong to this category
 
 3. Update the `PreviewProvider` to initialize these two `var`s in the preview:
 
@@ -331,7 +332,7 @@ var body: some View {
 
 * We use `.font(.title)` to style this `Text` as a `.title`.
 
-5. Add an `HStack` (horizontal stack) that will contain all of the articles in the given category:
+5. Add an `HStack` (horizontal stack) View below the `Text` View that will contain all of the articles in the given category:
 
 ```swift
 var body: some View {
@@ -349,7 +350,7 @@ var body: some View {
 * When we create the `HStack`, we define the `alignment` to be `.top`, meaning that all of the items in the `HStack` will have their top edges aligned.
 * The `ForEach` loop goes through the `articles` array and creates a `Text` for each `article` in the array. For now, the `Text` only displays the first 10 characters in the `article`'s `title`.
 
-6. Group the category name and the horizontal stack together in a `VStack` (vertical stack):
+6. Group the category name Text View and the horizontal stack View together inside a `VStack` (vertical stack View):
 
 ```swift
 var body: some View {
@@ -368,7 +369,7 @@ var body: some View {
 
 * We use `.leading` alignment to align all of the vertically stacked content to the leading (left) edge.
 * This `VStack` will place the category name directly above the horizontal stack of articles.
-* If you try to resume the Canvas preview at this point, it will look pretty terrible! This is because our `HStack` doesn't scroll, and it tries to squish all of its content onto the screen at once.
+* If you try to resume the Canvas preview at this point, it will look pretty terrible! This is because our `HStack` doesn't scroll yet and therefore squishes all of its content onto the screen at once.
 
 7. Add some padding to the category name, and wrap the `HStack` in a `ScrollView`:
 
@@ -401,7 +402,7 @@ var body: some View {
 <img src="./StepByStepResources/category_row_title_only.png" width="300"/>
 
 ### CategoryItem
-Next, we'll build a `CategoryItem` view that will display a single news article as a thumbnail and a title. Multiple `CategoryItem`s will go inside our `CategoryRow`'s horizontal `ScrollView` to display an entire category of news articles.
+Next, we'll build a `CategoryItem` View that will display a single news article as a thumbnail and a title. Multiple `CategoryItem`s will go inside our `CategoryRow`'s horizontal `ScrollView` to display an entire category of news articles. The image below shows how our `CategoryItem` will look.
 
 <img src="./StepByStepResources/category_item.png" width="300"/>
 
@@ -446,7 +447,7 @@ var body: some View {
 }
 ```
 
-* This `VStack` is just like the one we used in `CategoryRow`. It contains a `RemoteImage` and some `Text`. The `RemoteImage` displays the thumbnail for the `article`, and the `Text` displays the `article`'s `title`.
+* This `VStack` is just like the one we used in `CategoryRow`. It contains a `RemoteImage` View and a `Text` View below it. The `RemoteImage` displays the thumbnail for the `article`, and the `Text` displays the `article`'s `title`.
 
 > **NOTE:** If you never added your API key to `Constants.swift`, `RemoteImage` will pull from our locally saved images. Otherwise, `RemoteImage` will try to pull the live image. But again, be aware that doing so will cause a default placeholder image to show up in the Canvas preview!
 
@@ -533,7 +534,7 @@ struct CategoryRow_Previews: PreviewProvider {
 }
 ```
 
-> If you start another live preview in the Canvas, you should be able to see your completed `CategoryRow`! Each article should have a "card" displaying a thumbnail and a title, and the whole category of articles should scroll horizontally.
+> If you restart live preview in the Canvas, you should be able to see your completed `CategoryRow`! Each article should have a "card" displaying a thumbnail and a title, and the whole category of articles should scroll horizontally.
 
 <img src="./StepByStepResources/category_row.png" width="300"/>
 
@@ -545,7 +546,7 @@ Now that we've created a `CarouselView` and `CategoryRow`, we can use those two 
 
 1. Open `ContentView.swift`. This `View` is the first screen that a user sees when they open the app for the first time.
 
-2. Add the following property to the `ContentView` `struct`:
+2. Add the following property to the `ContentView` struct:
 
 ```swift
 struct ContentView: View {
@@ -630,7 +631,7 @@ var body: some View {
 
 ## 5. Displaying Article Details
 
-Now that we have our articles displayed in the home screen, we want to be able to click on those articles to view more details. This detail view will provide important summary information about the article such as title, image, author, date published, summary text, and a button that links to the entire article.
+Now that we have our articles displayed in the home screen, we want to be able to click on those articles to view more details. This detail view will provide important summary information about the article including the title, image, author, date published, summary text, and a button that links to the entire article.
 
 ### Creating the DetailView UI
 
@@ -655,96 +656,76 @@ struct DetailView_Previews: PreviewProvider {
         DetailView(article: NewsFeed.sampleData[4]) // using 4 to get good representative data
 ```
 
-4. Update the `Text` in the `body` to display the `article.title` rather than the static `"Hello, World!"` text and add modifiers for `italic` type, `title` font, and `semibold` font weight:
+4. Replace `body` with the following code:
 
 ```swift
 var body: some View {
-    Text(article.title)
-      .italic()
-      .font(.title)
-      .fontWeight(.semibold)
+    VStack(alignment: .leading) {
+        Text(article.title)
+            .italic()
+            .font(.title)
+            .fontWeight(.semibold)
+
+        RemoteImage(url: article.urlToImage)
+            .aspectRatio(contentMode: .fit)
+            .padding(.bottom)
+
+        Text("By: \(article.author ?? "Author")")
+            .bold()
+
+        Text(article.datePublished)
+            .font(.subheadline)
+            .padding(.bottom)
+
+        Text(article.description ?? "Description")
+            .font(.body)
+            .padding(.bottom)
+
+        Button("View Full Article") { }
+            .font(.title3)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 50)
+            .foregroundColor(.white)
+            .background(Color.blue)
+            .cornerRadius(10)
+    }.padding()
 }
 ```
+* A `VStack` with `leading` alignment and `padding` is added to wrap the following views:
+* The `Text` View is updated to use the `article.title` and modifiers are added for `italic` type, `title` font, and `semibold` font weight.
+* `RemoteImage` is added underneath the title with `bottom` padding and an `aspectRatio` set to `fit` to fill or shrink the image to fit the screen's width.
+* We add another `Text` View for the article's author with `bold` weight below the image. Notice how we're using string interpolation `"\(...)"` here to insert code into the string literal. This allows us to use the nil coalescing operator `??` to provide a default value if the optional variable `article.author` is nil.
+* Next, the published date is added in a `Text` View with `subheadline` font and `bottom` padding.
+* Followed by another `Text` View with `body` font and `bottom` padding. Notice how we need to use the nil coalescing operator again to provide a default value if `article.description` is nil.
+* The last view added is a `Button` using the trailing closure version of `Button(title: StringProtocol, action: () -> Void)`, but we're omitting the action code (what's executed when the button is tapped) in the closure for now. We're also adding a handful of style modifiers including `title3` font, 10 points of `vertical` and 50 points of `horizontal` padding to stretch the button lengthwise, `white` `foregroundColor` for the button text, `blue` `background` color, and a `cornerRadius` of 10 adds curved corners to the button. 
 
-5. Embed the title you just created in a VStack with `leading` alignment, then include the following code directly under the `Text` to add the article image:
-
-```swift
-RemoteImage(url: article.urlToImage)
-    .aspectRatio(contentMode: .fit)
-    .padding(.bottom)
-```
-
-* We use `.padding(.bottom)` to add spacing below the image to separate it from the content to follow.
-
-6. Add two new `Text` views below the image: one to display the author and the other to display the date. Add `"By " + (article.author ?? "Author")` inside the first `Text` view and style it `bold`. Add `article.datePublished` inside the second `Text` view and style it with `subheadline` font and `bottom` padding.
-
-```swift
-Text("By: \(article.author ?? "Author")")
-    .bold()
-Text(article.datePublished)
-    .font(.subheadline)
-    .padding(.bottom)
-```
-
-* In the first `Text` view, we need to use the nil coalescing operator `??` to provide a default value if the optional variable `article.author` is nil.
-* Note: the omission of padding after the first `Text` view is intentional since we want to group these two views together.
-
-7. Now add a `Text` view for the article description with `body` font and `bottom` padding. We need to add the nil coalescing operator here as well.
-
-```swift
-Text(article.description ?? "Description")
-    .font(.body)
-    .padding(.bottom)
-```
-
-8. Add the following code for a button after the article description `Text` view:
-
-```swift
-Button("View Full Article") { }
-    .padding(.vertical, 10)
-    .padding(.horizontal, 50)
-    .background(Color.blue)
-    .foregroundColor(Color.white)
-    .cornerRadius(10)
-    .font(.title3)
-```
-
-* The `Button` view takes a string label and has a trailing closure `{}` where we can add the button's action (we will address this in a bit).
-* The vertical and horizontal padding add area around the button in which the background color can fill. Note: `padding` must be specified before `background` or the color won't fill properly. 
-* Setting `.foregroundColor(Color.white)` changes the text to white. 
-* `.cornerRadius(10)` adds curved corners to the button.
-* Finally the button is given a font of `title3`.
-
-Adding too much style in your main view can get messy, so let's refactor this style into a separate struct that conforms to the `ButtonStyle` protocol. Use the code below to add the new `FilledButtonStyle` struct directly after your `DetailView` struct, then modify the original button with `.buttonStyle(FilledButtonStyle())`.
+5. Adding too much style in your main view can get messy, so let's refactor this style into a separate struct that conforms to the `ButtonStyle` protocol. Use the code below to add the new `FilledButtonStyle` struct directly after your `DetailView` struct, then modify the original button with `.buttonStyle(FilledButtonStyle())`.
 
 ```swift
           Button("View Full Article") { }
               .buttonStyle(FilledButtonStyle())
-        }
+        }.padding()
     }
 }
 
 struct FilledButtonStyle: ButtonStyle {
-    var backgroundColor: Color = .blue
-    var foregroundColor: Color = .white
-
     func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .padding(.vertical, 10)
             .padding(.horizontal, 50)
-            .background(backgroundColor)
-            .cornerRadius(10)
             .font(.title3)
-            .foregroundColor(configuration.isPressed ? foregroundColor.opacity(0.5) : foregroundColor)
+            .foregroundColor(.white)
+            .background(configuration.isPressed ? Color(red: 0.0, green: 0.3, blue: 0.8) : .blue)
+            .cornerRadius(10)
     }
 }
 ```
 
 * To conform to `ButtonStyle` we need to implement the `makeBody` function which takes a `ButtonStyleConfiguration` parameter. This simply allows us to access properties relevant to the button such as `label` and `isPressed`.
 * We add all of our styling we had before to the `configuration.label` property.
-* Note: we take advantage of the `configuration.isPressed` property to change the foregroundColor `opacity`, which gives feedback to the user that the `Button` is in its `pressed` state.
+* Note: we take advantage of the `configuration.isPressed` property to change the background color to a custom darker shade of blue `Color(red: 0.0, green: 0.3, blue: 0.8) : .blue)`, which gives feedback to the user that the `Button` is in its `pressed` state.
 
-You'll notice that the `Button` is left-aligned due to the alignment of its parent `VStack`. We can remedy this by embedding the `Button` inside an `HStack` and adding `Spacer` views before and after the `Button`, centering it horizontally. That looks better!
+6. You'll notice that the `Button` is left-aligned due to the alignment of its parent `VStack`. We can remedy this by embedding the `Button` inside an `HStack` and adding `Spacer` views before and after the `Button`, centering it horizontally. That looks better!
 
 ```swift
 HStack {
@@ -755,17 +736,7 @@ HStack {
 }
 ```
 
-9. It's possible for the content of `DetailView` to extend past the bottom of the screen. Let's wrap up the UI by adding `padding` to the `VStack`, embedding our `VStack` inside a `ScrollView` with a  `.navigationBarTitleDisplayMode(.inline)` modifier (this makes the nav bar compact when we enter the `DetailView` from another screen).
-
-```swift
-ScrollView {
-    VStack(alignment: .leading) {
-        ...
-    }.padding()
-}.navigationBarTitleDisplayMode(.inline)
-```
-
-Your code should now look something like this:
+7. It's possible for the content of `DetailView` to extend past the bottom of the screen. Let's wrap up the UI by embedding our `VStack` inside a `ScrollView` with a `.navigationBarTitleDisplayMode(.inline)` modifier (this makes the nav bar compact when we enter the `DetailView` from another screen). Your code should now look something like this:
 
 ```swift
 struct DetailView: View {
@@ -785,6 +756,7 @@ struct DetailView: View {
 
                 Text("By: \(article.author ?? "Author")")
                     .bold()
+
                 Text(article.datePublished)
                     .font(.subheadline)
                     .padding(.bottom)
@@ -805,17 +777,14 @@ struct DetailView: View {
 }
 
 struct FilledButtonStyle: ButtonStyle {
-    var backgroundColor: Color = .blue
-    var foregroundColor: Color = .white
-
     func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .padding(.vertical, 10)
             .padding(.horizontal, 50)
-            .background(backgroundColor)
-            .cornerRadius(10)
             .font(.title3)
-            .foregroundColor(configuration.isPressed ? foregroundColor.opacity(0.5) : foregroundColor)
+            .foregroundColor(.white)
+            .background(configuration.isPressed ? Color(red: 0.0, green: 0.3, blue: 0.8) : .blue)
+            .cornerRadius(10)
     }
 }
 
@@ -856,7 +825,7 @@ ForEach(articles) { article in
 }
 ```
 
-> Refresh the Canvas and start a live preview. You should now be able to click on elements in the home screen and navigate to the article details, and back again.
+> Switch to `ContentView.swift` and refresh the Canvas to start a live preview. You should now be able to click on elements in the home screen and navigate to the article details, and back again.
 
 ## 7. Opening the Full Article from the Detail Page
 
@@ -872,27 +841,28 @@ struct DetailView: View {
     @State var showWebView = false
 ```
 
-* `@State` is a property wrapper that signifies the source of truth for the `showWebView` value in our `DetailView`.
+* `@State` is a property wrapper that signifies the source of truth for the `showWebView` value in our `DetailView`. You can think of this as a reference type (rather than a value type) that can be mutated by other views when passed to them as a binding `$` (which we'll see in a bit).
 
-2. Inside the closure representing the `Button` action, update `showWebView` to `true`. This allows the web view to be presented only after the `Button` is pressed.
-
-```swift
-Button("View Full Article") {
-    showWebView = true
-}.buttonStyle(FilledButtonStyle())
-```
-
-3. Add the following code directly after the `buttonStyle` line in the previous block to present a web view linking to our article:
+2. Replace the `HStack` containing the button code with the following:
 
 ```swift
-.sheet(isPresented: $showWebView, content: {
-    // modally present web view
-    WebView(url:URL(string: article.url)!)
-})
+HStack {
+    Spacer()
+    Button("View Full Article") {
+        showWebView = true
+    }
+    .buttonStyle(FilledButtonStyle())
+    .sheet(isPresented: $showWebView, content: {
+        // modally present web view
+        WebView(url:URL(string: article.url)!)
+    })
+    Spacer()
+}
 ```
 
+*  `showWebView` is set to `true` inside the `Button` action closure. This allows the web view to be presented only after the `Button` is pressed.
 * `sheet(isPresented:onDismiss:content:)` modally presents the given `content` view when `isPresented` is true.
-* We pass in `$showWebView` for the `isPresented` parameter. `showWebView` is a binding, or a shared property to our `showWebView` state variable which is set to `true` by the `DetailView` when the button is pressed, and set to `false` again by the `sheet` on dismissal. The binding and state allows us to modify the property by different views while keeping one source or truth for the value.
+* We pass in `$showWebView` for the `isPresented` parameter. `$showWebView` is a binding, or a shared property to our `showWebView` state variable. This is set to `true` by the `DetailView` when the button is pressed, and set to `false` again by the `sheet` on dismissal. Binding to a state property allows us to modify the property by different views while keeping one source or truth for the value.
 * The `content` is our pre-defined `WebView` which is just a SwiftUI wrapper around a Safari view controller. This takes the `url` of the current article and opens the web page.
 
 That's it! Run your app again and test out the presentation of your `WebView` by clicking on the "View Full Article" button. If you haven't already, feel free to create your own API key and add it to the `Constants.swift` file to test your app against live data and get up-to-date news. If you're feeling up to it, check out the Bonus Functionality section in the `README.md`.
