@@ -1,6 +1,6 @@
 # NewsfeedUI
 
-This workshop covers building a Newsfeed app using SwiftUI, and it's meant to be used for Capital One's Software Engineering Summit. This workshop covers the basics of Swift, iOS, SwiftUI, and building apps with Xcode.
+This workshop covers building a Newsfeed app using SwiftUI, and it's meant to be used for Capital One's Black & Hispanic Tech Summit. This workshop covers the basics of Swift, iOS, SwiftUI, and building apps with Xcode.
 
 ## Requirements
 
